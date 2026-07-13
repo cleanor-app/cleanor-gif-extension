@@ -15,6 +15,11 @@ const MAX_PIXELS = 60e6; // ~240 MB of RGBA — e.g. 500×500 × 240 frames.
 export const LOOP_FOREVER = 0;
 export const LOOP_ONCE = -1;
 
+// How far a pixel may drift from what is already on the canvas before it has to be
+// re-written (per channel, 0-255). 0 = only bit-identical pixels are skipped, which
+// finds nothing in a video-derived GIF. Tuned by measurement, see README.
+export const DEFAULT_TOLERANCE = 12;
+
 // ---- decode -----------------------------------------------------------------
 // Returns { width, height, loop, frames: [{ rgba: Uint8ClampedArray, delayMs }] }.
 export async function decodeAnimated(file) {
@@ -153,58 +158,116 @@ export function applyOps(src, opts = {}) {
 // ---- encode -----------------------------------------------------------------
 // opts: { maxColors=256, loop=0 }. Lower maxColors => smaller file.
 //
-// Two encoding modes, picked per animation:
-//  - Source has real transparency: every frame carries its own transparent index
-//    and disposal 2 (restore to background), so alpha survives the round-trip.
-//  - Fully opaque source: inter-frame delta — pixels identical to the previous
-//    frame are written as the transparent index with disposal 1 (leave in place),
-//    which is what makes the re-encoded GIF smaller than the original instead of
-//    bigger. Long runs of one index compress far better under LZW.
-export function encodeGif({ width, height, frames, loop = LOOP_FOREVER, maxColors = 256, alpha }) {
+// One palette is built for the whole animation and written once, as the GIF's global
+// colour table. That is what makes inter-frame deltas actually work: a real-world GIF
+// is usually video-derived, so a "still" background is never bit-for-bit identical
+// between frames (dither and compression noise move every pixel by a step or two).
+// Comparing raw RGBA would find almost nothing to skip and the file would come out
+// BIGGER than the source. Comparing *palette indices* collapses that noise: pixels
+// that land on the same colour are written as the transparent index with disposal 1
+// ("leave the previous pixels in place"), and long runs of one index are exactly what
+// LZW squeezes.
+//
+// Sources with real transparency keep the old path: their own transparent index and
+// disposal 2, no delta (a pixel that becomes transparent cannot be expressed as
+// "keep what was there").
+export function encodeGif({
+  width, height, frames,
+  loop = LOOP_FOREVER,
+  maxColors = 256,
+  alpha,
+  tolerance = DEFAULT_TOLERANCE,
+}) {
   const enc = GIFEncoder();
   const colors = Math.max(2, Math.min(256, maxColors));
   if (alpha === undefined) alpha = hasAlpha(frames);
+  const format = alpha ? 'rgba4444' : 'rgb565';
 
-  let prev = null;
+  // Reserve one slot for the "unchanged pixel" index in the opaque (delta) case.
+  const wanted = alpha ? colors : Math.max(2, colors - 1);
+  const palette = quantize(samplePixels(frames), wanted, { format, oneBitAlpha: alpha });
+
+  const tIndex = alpha ? palette.findIndex((c) => c[3] === 0) : palette.length;
+  // The dummy entry only pads the colour table so tIndex is addressable; applyPalette
+  // is never given it, so no pixel is ever mapped onto it.
+  const table = alpha ? palette : [...palette, [0, 0, 0]];
+
+  // Real GIFs are video-derived and full of dither noise, so "identical to the previous
+  // frame" almost never happens literally. A pixel counts as unchanged when its colour is
+  // within `tolerance` of the colour already on the canvas. Distances are looked up in a
+  // palette-vs-palette table built once (256x256 at worst).
+  const near = alpha ? null : nearTable(palette, tolerance);
+
+  let canvas = null; // the indices actually visible on screen, not the ideal ones
   for (let i = 0; i < frames.length; i++) {
     const fr = frames[i];
+    const ideal = applyPalette(fr.rgba, palette, format);
     const opts = { delay: fr.delayMs, repeat: loop };
 
     if (alpha) {
-      const palette = quantize(fr.rgba, colors, { format: 'rgba4444', oneBitAlpha: true });
-      const index = applyPalette(fr.rgba, palette, 'rgba4444');
-      const tIndex = palette.findIndex((c) => c[3] === 0);
-      Object.assign(opts, {
-        palette,
-        transparent: tIndex >= 0,
-        transparentIndex: Math.max(0, tIndex),
-        // dispose defaults to 2 (restore to background) when transparent.
-      });
-      enc.writeFrame(index, width, height, opts);
-    } else {
-      // Keep one slot free for the "unchanged pixel" index.
-      const palette = quantize(fr.rgba, Math.max(2, colors - 1));
-      const index = applyPalette(fr.rgba, palette);
-      const tIndex = palette.length;
-      if (prev) {
-        const cur32 = new Uint32Array(fr.rgba.buffer, fr.rgba.byteOffset, index.length);
-        const prev32 = new Uint32Array(prev.buffer, prev.byteOffset, index.length);
-        for (let p = 0; p < index.length; p++) if (cur32[p] === prev32[p]) index[p] = tIndex;
-      }
-      Object.assign(opts, {
-        // The extra entry only pads the colour table so tIndex is addressable;
-        // applyPalette never maps a pixel onto it.
-        palette: [...palette, [0, 0, 0]],
-        transparent: Boolean(prev),
-        transparentIndex: tIndex,
-        dispose: 1, // leave previous pixels in place — required for delta frames
-      });
-      enc.writeFrame(index, width, height, opts);
-      prev = fr.rgba;
+      Object.assign(opts, { transparent: tIndex >= 0, transparentIndex: Math.max(0, tIndex) });
+      // dispose defaults to 2 (restore to background) when transparent.
+      if (i === 0) opts.palette = table;
+      enc.writeFrame(ideal, width, height, opts);
+      continue;
     }
+
+    const out = ideal;
+    if (canvas) {
+      const n = palette.length;
+      for (let p = 0; p < out.length; p++) {
+        const was = canvas[p];
+        if (near[was * n + out[p]]) out[p] = tIndex; // close enough: leave what is there
+        else canvas[p] = out[p];
+      }
+    } else {
+      canvas = Uint8Array.from(out);
+    }
+    Object.assign(opts, { transparent: i > 0, transparentIndex: tIndex, dispose: 1 });
+    if (i === 0) opts.palette = table;
+    enc.writeFrame(out, width, height, opts);
   }
   enc.finish();
   return enc.bytes();
+}
+
+// near[a * n + b] = 1 when palette colour b is close enough to a to be left alone.
+function nearTable(palette, tolerance) {
+  const n = palette.length;
+  const t = new Uint8Array(n * n);
+  const tol = tolerance * tolerance * 3; // squared distance summed over R, G, B
+  for (let a = 0; a < n; a++) {
+    const [ar, ag, ab] = palette[a];
+    for (let b = 0; b < n; b++) {
+      const [br, bg, bb] = palette[b];
+      const dr = ar - br, dg = ag - bg, db = ab - bb;
+      t[a * n + b] = dr * dr + dg * dg + db * db <= tol ? 1 : 0;
+    }
+  }
+  return t;
+}
+
+// Quantizing every frame of a 125-frame GIF is slow and pointless: a sample spread
+// across the animation yields the same palette for a fraction of the work.
+// NOTE: gifenc's quantize() reads the whole underlying ArrayBuffer, not the view, so
+// this must return an exactly-sized array (any slack would count as black pixels).
+function samplePixels(frames) {
+  const MAX_PIXELS = 2e6;
+  const perFrame = frames[0].rgba.length / 4;
+  const step = Math.max(1, Math.ceil((frames.length * perFrame) / MAX_PIXELS));
+  const taken = Math.ceil(perFrame / step);
+  const out = new Uint8ClampedArray(taken * frames.length * 4);
+  let o = 0;
+  for (const fr of frames) {
+    for (let p = 0; p < perFrame; p += step) {
+      const s = p * 4;
+      out[o++] = fr.rgba[s];
+      out[o++] = fr.rgba[s + 1];
+      out[o++] = fr.rgba[s + 2];
+      out[o++] = fr.rgba[s + 3];
+    }
+  }
+  return out;
 }
 
 function hasAlpha(frames) {

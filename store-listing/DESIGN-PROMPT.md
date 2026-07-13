@@ -1,100 +1,119 @@
-# Claude Design — prompt for the GIF Toolkit store graphics
+# Claude Design: prompt for the full GIF Toolkit graphics set
 
-Upload the 7 real popup captures from **`store-listing/popup-shots/`** alongside this prompt.
-They are actual screenshots of the working extension (380 px popup, captured at 2×), not mockups:
+Upload the 7 popup captures from **`store-listing/popup-shots/`** together with this prompt.
+They are real screenshots of the working extension (380 px popup, captured at 2x), not mockups:
 
-| File | State it shows |
+| File | What it shows |
 | --- | --- |
 | `01-drop.png` | Empty drop zone |
-| `02-optimize.png` | Result: 480×360 · 30 frames · **487.2 KB → 243.4 KB (−50%)** |
-| `03-reverse.png` | Reverse switch on |
-| `04-trim.png` | Trim: **frames 6–18 of 30** → 487.2 KB → 110.3 KB (−77%) |
-| `05-speed.png` | Speed 2× · Size 60% · 64 colors |
+| `02-optimize.png` | Real meme GIF: 426x426, 125 frames, **8.44 MB to 4.24 MB (-50%)** |
+| `03-reverse.png` | Reverse switch on (dog reaction GIF) |
+| `04-trim.png` | Trim: frames 34 to 92 of 125 |
+| `05-speed.png` | Speed 2x, size 60%, 64 colors |
 | `06-incoming.png` | Right-click hand-off banner ("Open the GIF from this page?") |
 | `07-dark.png` | Dark mode result |
 
-⚠️ **Do not redraw or restyle the popup.** Google requires store screenshots to show the
-extension as it actually is. Place the real captures inside the compositions; invent only the
-background, headline and framing around them.
+**Do not redraw or restyle the popup.** Google requires store screenshots to show the extension
+as it actually is, and the savings figures visible in the captures are real measurements. Place
+the captures as they are; invent only the background, headline and framing around them.
+
+**House rule: no em dashes anywhere in the copy.** Use a comma, a colon, or a full stop.
 
 ---
 
-## Prompt to paste
+## Prompt to paste into Claude Design
 
-> You are designing the Chrome Web Store listing graphics for **Cleanor GIF Toolkit**, a free
-> Chrome extension that reverses, compresses, trims, speeds up and resizes animated GIFs
-> entirely on the user's device (nothing is uploaded).
+> You are designing the complete Chrome Web Store graphics set for **Cleanor GIF Toolkit**, a
+> free Chrome extension that reverses, compresses, trims, speeds up and resizes animated GIFs
+> entirely on the user's device. Nothing is uploaded.
 >
-> I am attaching real screenshots of the extension's popup. Compose the store assets around
-> them — **place the attached screenshots as-is** (you may add a rounded corner radius and a
-> soft drop shadow); do not redraw, restyle or fake the UI.
+> I am attaching real screenshots of the extension's popup. **Place them as-is** inside the
+> compositions (you may add a rounded corner radius and a soft drop shadow). Do not redraw,
+> restyle or invent UI.
 >
-> **Brand system** (this must sit next to two live Cleanor extensions, so stay in-family):
+> ### Brand system
+>
+> This has to sit beside two live Cleanor extensions, so stay in-family. Calm, technical,
+> trustworthy: a developer tool, not a toy.
+>
 > - Primary blue `#4576FD`, deep blue `#2F55D4`, tint `#EEF3FF`
 > - Ink `#1C2434`, muted text `#56617A`
-> - Success green `#12B886` on `#E7F8F2` (use for the savings figure / privacy chip)
-> - Surfaces: near-white `#F7F9FF` → `#E4ECFF` soft gradients; a very subtle dot grid is on-brand
-> - Type: a clean geometric/neo-grotesque sans. Headlines heavy (800), tight tracking (−2.5%),
->   large (56–64 px); body 22–24 px, muted. No serif, no script, no outline fonts.
-> - Feel: calm, technical, trustworthy — a developer tool, not a toy. Generous whitespace.
->   Light theme by default; one asset may go dark for contrast.
+> - Success green `#12B886` on `#E7F8F2` (use it for savings figures and privacy chips)
+> - Surfaces: soft gradients from `#F7F9FF` to `#E4ECFF`; a faint blue dot grid is on-brand
+> - Type: a clean geometric or neo-grotesque sans. Headlines heavy (800 weight), tight tracking
+>   (about -2.5%), 56 to 64 px. Body 22 to 24 px in the muted grey. No serif, no script.
+> - Generous whitespace. Light theme throughout, except where noted.
+> - No em dashes in any text.
 >
-> **Deliverables**
+> ### 1. Store icon, 128x128 px
 >
-> **5 screenshots — 1280×800 px each.** Layout: headline + one supporting sentence + a small
-> accent chip on the left, the attached popup capture floating on the right at ~370 px wide with
-> a soft shadow. Keep the headline readable when the image is scaled to a 320 px-wide thumbnail.
+> A rounded square (about 22% corner radius) in a `#4576FD` to `#2F55D4` vertical gradient, with
+> a white glyph centred on it. The glyph should read instantly at 16x16, so it must be one bold
+> idea, not a scene: a filmstrip frame with a circular arrow around it (reverse), or a filmstrip
+> with a downward compression arrow. Keep at least 10% padding inside the square. Deliver at
+> 128x128, and confirm it still reads when scaled to 16x16 and 48x48.
 >
-> 1. **Use `02-optimize.png`.** Headline: "Make GIFs **actually smaller**". Sub: "Not a re-save.
->    Unchanged pixels are never stored twice, so a moving subject on a steady background is
->    halved or better — with nothing visibly lost." Chip: "🔒 On your device · nothing uploaded".
-> 2. **Use `03-reverse.png`.** Headline: "Reverse it, **one switch**". Sub: "Play any GIF
->    backwards. Turn a clip into a loop that runs forward and back, or just make the joke land."
->    Chip: "⚡ Live preview as you change it".
-> 3. **Use `04-trim.png`.** Headline: "Trim to the **frames you want**". Sub: "Drag two handles
->    to cut the dead air at the start, stop before the logo, or pull one reaction out of a long
->    clip." Chip: "✂️ Frame-exact".
-> 4. **Use `05-speed.png`.** Headline: "Speed, size, **colors, loop**". Sub: "Retime from 0.25×
->    to 4×, scale to 20–100%, cap the palette, keep every 2nd frame. The exact output size
->    updates as you drag." Chip: "📉 Real numbers, not estimates".
-> 5. **Use `06-incoming.png`.** Headline: "Right-click any **GIF on a page**". Sub: "No saving
->    the file first. Access to that one site is asked for at that moment — never held up front.
->    APNG and animated WebP work too." Chip: "🛡️ One permission, nothing else".
+> ### 2. Five screenshots, 1280x800 px each
 >
-> (Bold marks the phrase to set in the deep blue `#2F55D4`; the rest of the headline in ink.)
+> Layout for all five: headline and one supporting sentence on the left with a small accent chip
+> beneath, the attached popup capture floating on the right at about 370 px wide with a soft
+> shadow. The headline must stay readable when the image is scaled down to a 320 px-wide
+> thumbnail. Bold marks the phrase to set in deep blue `#2F55D4`; the rest of the headline in ink.
 >
-> **Marquee promo tile — 1400×560 px.** Headline: "Reverse, shrink and trim **any GIF — on your
-> device**". Sub: "Free. No upload, no account, no tracking. APNG and animated WebP too."
-> Use `07-dark.png` on the right, ~300 px wide. Nothing important within 60 px of any edge —
-> Google crops this tile on some surfaces.
+> 1. Use `02-optimize.png`. Headline: "Make GIFs **actually smaller**". Sub: "Not a re-save.
+>    Pixels that do not change are never stored twice, so a real meme GIF loses about half its
+>    weight at the default settings, with nothing visibly lost." Chip: "On your device, nothing
+>    uploaded".
+> 2. Use `03-reverse.png`. Headline: "Reverse it, **one switch**". Sub: "Play any GIF backwards.
+>    Turn a clip into a loop that runs forward and back, or just make the joke land." Chip: "Live
+>    preview as you change it".
+> 3. Use `04-trim.png`. Headline: "Trim to the **frames you want**". Sub: "Drag two handles to cut
+>    the dead air at the start, stop before the logo, or pull one reaction out of a long clip."
+>    Chip: "Frame exact".
+> 4. Use `05-speed.png`. Headline: "Speed, size, **colors, loop**". Sub: "Retime from 0.25x to 4x,
+>    scale to 20 to 100%, cap the palette, keep every 2nd frame. The exact output size updates as
+>    you drag." Chip: "Real numbers, not estimates".
+> 5. Use `06-incoming.png`. Headline: "Right-click any **GIF on a page**". Sub: "No saving the
+>    file first. Access to that one site is asked for at that moment, never held up front. APNG
+>    and animated WebP work too." Chip: "One permission, nothing else".
 >
-> **Small promo tile — 440×280 px.** Centred: the extension icon (attached separately, or a
-> rounded blue square with "GIF"), the word-mark "GIF Toolkit", the line
-> "REVERSE · OPTIMIZE · TRIM · SPEED" in primary blue, and "100% on your device — by Cleanor".
-> It is displayed small — keep it to those four elements, no screenshot, no paragraph.
+> ### 3. Marquee promo tile, 1400x560 px
 >
-> **Hard constraints**
-> - Export every asset as **PNG, 24-bit, no alpha channel** — the Web Store rejects transparency.
-> - Exact pixel dimensions, no bleed, no rounded outer corners.
-> - No claims beyond these: the savings shown must match the numbers visible in the screenshots.
-> - No Google/Chrome logos or branding of any kind.
+> Headline: "Reverse, shrink and trim **any GIF, on your device**". Sub: "Free. No upload, no
+> account, no tracking. APNG and animated WebP too." Use `07-dark.png` on the right at about
+> 300 px wide. Keep everything important at least 60 px away from every edge: Google crops this
+> tile on some surfaces.
+>
+> ### 4. Small promo tile, 440x280 px
+>
+> Displayed small, so keep it to four elements, centred: the extension icon, the word-mark "GIF
+> Toolkit", the line "REVERSE · OPTIMIZE · TRIM · SPEED" in primary blue, and "100% on your
+> device. By Cleanor." No screenshot, no paragraph.
+>
+> ### Hard constraints
+>
+> - Export every asset as **PNG, 24-bit, with no alpha channel**. The Web Store rejects
+>   transparency.
+> - Exact pixel dimensions. No bleed, no rounded outer corners.
+> - Make no claim that the screenshots do not support: the savings shown must match the figures
+>   visible in the captures.
+> - No Google or Chrome logos or branding.
 
 ---
 
-## Size note
+## Required sizes (Chrome Web Store)
 
-Google's small promo tile is **440×280**, not 440×220 — a 440×220 upload is rejected. Sizes the
-Web Store accepts:
+| Asset | Size | Notes |
+| --- | --- | --- |
+| Store icon | **128x128** | Also used at 16, 32 and 48 px in the browser |
+| Screenshots (1 to 5) | **1280x800** | 640x400 also allowed, 1280x800 preferred |
+| Small promo tile | **440x280** | Not 440x220: that upload is rejected |
+| Marquee promo tile | **1400x560** | Optional, needed for featured placement |
 
-| Asset | Required size |
-| --- | --- |
-| Screenshots (1–5) | **1280×800** (or 640×400) |
-| Small promo tile | **440×280** |
-| Marquee promo tile | **1400×560** |
-| Store icon | **128×128** |
+A 920x680 "large tile" existed in the old store and is no longer accepted, so it is not in the set.
 
-## Already generated
+## Working set already in the repo
 
-`store-listing/png/` holds a working set built from the same captures (5 screenshots, both
-tiles, correct sizes, 24-bit, no alpha) — usable as-is for submission, or as a reference for the
-Claude Design pass.
+`store-listing/png/` holds a complete set built from these same captures (5 screenshots, both
+tiles, correct sizes, 24-bit, no alpha). It is good enough to submit as-is, and doubles as a
+reference for the Claude Design pass.

@@ -12,7 +12,7 @@ No upload. No account. No tracking. No ffmpeg download.
 [![100% local](https://img.shields.io/badge/processing-100%25%20local-12b886.svg)](#privacy--permissions)
 [![Web tools](https://img.shields.io/badge/web%20version-cleanor.app-4576fd.svg)](https://cleanor.app/tools/reverse-gif)
 
-<img src="store-listing/png/screenshot-1.png" width="760" alt="GIF Toolkit popup: a 487 KB GIF optimized to 243 KB with live preview">
+<img src="store-listing/png/screenshot-1.png" width="760" alt="GIF Toolkit popup: an 8.4 MB meme GIF optimized to 4.2 MB with live preview">
 
 </div>
 
@@ -42,31 +42,48 @@ Most browser-based "GIF compressors" decode your animation and write every frame
 full. A GIF written that way is often **larger than the one you started with**, because the
 original was already frame-optimized and your "optimizer" threw that optimization away.
 
-Cleanor writes real **inter-frame deltas**. When a pixel is identical to the pixel in the
-previous frame, it is not stored again — it is written as the transparent index, with GIF
-disposal method 1 ("leave the previous pixels in place"). Long runs of that one index compress
-far better under LZW, which is exactly what the GIF format was built to exploit.
+Cleanor writes real **inter-frame deltas**: a pixel that is already the right colour on screen
+is not stored again. It is written as the transparent index with GIF disposal method 1 ("leave
+the previous pixels in place"), and long runs of that one index are exactly what LZW squeezes.
 
-The honest catch, stated up front: **how much you save depends entirely on your GIF.** A clip
-where a subject moves over a background that stays put — the overwhelming majority of memes,
-reactions, product demos and screen recordings — is full of repeated pixels and shrinks a lot.
-A full-motion clip where every pixel changes in every frame has no repetition to exploit and
-will barely shrink at all. The popup tells you so instead of pretending otherwise, and points
-you at the settings that *do* help (fewer colors, fewer frames, smaller size).
+Two details make that work on GIFs people actually have, rather than only on synthetic ones:
+
+- **One palette for the whole animation.** Written once as the global colour table, so indices
+  are comparable across frames (and no frame pays for a local table).
+- **A perceptual tolerance, not bit-equality.** Real GIFs are video-derived: dither and
+  compression noise nudge *every* pixel by a step or two on every frame, so "identical to the
+  previous frame" almost never happens literally. A pixel counts as unchanged when it is within
+  a small distance (12/255 per channel, [tuned by measurement](#measured-results)) of what is
+  already on the canvas. Drift is bounded, because each pixel is compared against what is
+  actually displayed, not against an ideal.
+
+Bit-exact comparison alone would find nothing to skip on a real meme GIF, and the output would
+come out **62% bigger** than the source. That is not a hypothetical: it is what this encoder did
+before the tolerance was added.
 
 ### Measured results
 
-Real numbers, produced by driving the actual extension in Chrome 150 — not estimates:
+Real numbers, produced by running the actual extension in Chrome 150 over real files, including
+two ordinary meme GIFs downloaded from Giphy. Not estimates:
 
 | Source GIF | Size | Default | 64 colors | ½ frames | 64 colors + ½ frames + 60% size |
 | --- | --- | --- | --- | --- | --- |
-| Moving subject, steady background *(the common case)* | 487 KB | **243 KB** (−50%) | **194 KB** (−60%) | **134 KB** (−72%) | **61 KB** (−88%) |
-| Simple animation, flat background | 177 KB | **55 KB** (−69%) | **49 KB** (−73%) | **37 KB** (−79%) | **20 KB** (−89%) |
-| Full motion — every pixel changes each frame | 2 132 KB | **1 994 KB** (−6%) | **1 445 KB** (−32%) | **1 230 KB** (−42%) | **288 KB** (−86%) |
-| Transparent background *(alpha preserved)* | 81 KB | **50 KB** (−38%) | **46 KB** (−43%) | **25 KB** (−69%) | **12 KB** (−85%) |
+| Real meme GIF *(dog reaction, 480×406, 28 frames)* | 1 233 KB | **966 KB** (−22%) | **847 KB** (−31%) | **619 KB** (−50%) | **190 KB** (−85%) |
+| Real meme GIF *(husky puppies, 426×426, 125 frames)* | 8 641 KB | **4 345 KB** (−50%) | **4 123 KB** (−52%) | **2 634 KB** (−70%) | **723 KB** (−92%) |
+| Moving subject, steady background | 487 KB | **128 KB** (−74%) | **97 KB** (−80%) | **73 KB** (−85%) | **28 KB** (−94%) |
+| Simple animation, flat background | 177 KB | **29 KB** (−84%) | **27 KB** (−85%) | **19 KB** (−89%) | **9 KB** (−95%) |
+| Transparent background *(alpha preserved)* | 81 KB | **46 KB** (−44%) | **44 KB** (−46%) | **23 KB** (−71%) | **11 KB** (−86%) |
 
-The default settings change nothing about how your GIF looks: same dimensions, same frame
-count, same palette size, same timing. The saving comes purely from not storing pixels twice.
+At the default settings nothing about the animation changes: same dimensions, same frame count,
+same palette size, same timing. Mean pixel error against the source is **~3/255 (about 1%)**,
+which is why the default tolerance is 12 and not 20: at 20 the files are roughly half the size
+again, but posterized patches start to show in flat areas, and shipping visible artefacts by
+default is not a trade worth making.
+
+The amount you save still depends on the GIF. A busy, full-motion clip has less repetition to
+exploit than a subject moving over a background that stays put. When there is little to gain,
+the popup says so and points at the controls that help, instead of showing a disappointing
+number and leaving you to guess.
 
 ---
 
@@ -98,8 +115,8 @@ stroke. Frame timings are carried with their frames, so a reversed GIF keeps its
 Drop the file in and it is already optimized at the default settings — see the table above.
 Three dials take it further, and the exact output size updates as you turn them:
 
-- **Colors** — 256 (best) → 128 → 64 (small) → 32 (tiny). Each frame is quantized with its own
-  palette, so a smaller palette costs less than you would expect.
+- **Colors** — 256 (best) → 128 → 64 (small) → 32 (tiny). One palette is built for the whole
+  animation, so a smaller palette shrinks every frame at once.
 - **Frames** — keep all, every 2nd, or every 3rd. **The dropped frames' delays are merged into
   the frames that remain**, so a lighter GIF still plays at the speed you expect instead of
   quietly running fast. (Plenty of tools get this wrong.)
@@ -107,12 +124,12 @@ Three dials take it further, and the exact output size updates as you turn them:
 
 ### Trim a GIF
 
-<img src="store-listing/popup-shots/04-trim.png" width="330" align="right" alt="Trim control: frames 6–18 of 30">
+<img src="store-listing/popup-shots/04-trim.png" width="330" align="right" alt="Trim control: frames 34 to 92 of 125">
 
 Drag the two handles to keep a range of frames. Cut the dead air before the action starts, stop
 before the watermark at the end, or pull a single reaction out of a long clip. The handles
-cannot cross, the frame count and file size update live, and the range is frame-exact — trimming
-6–18 of 30 gives you exactly 13 frames.
+cannot cross, the frame count and file size update live, and the range is frame-exact: trimming
+34–92 of 125 gives you exactly 59 frames.
 
 Need to *split* a GIF into several files, or crop it to a region? Those live on the web version:
 **[trim & split](https://cleanor.app/tools/trim-split-gif)** ·
@@ -169,7 +186,8 @@ zipped**.
 2. **Transform** — trim → reverse → thin → retime → resize, as plain operations on an array of
    `{ rgba, delayMs }` frames.
 3. **Encode** — [gifenc](https://github.com/mattdesl/gifenc) (a small, dependency-free JS
-   encoder) writes the GIF, with the delta/transparency strategy described above.
+   encoder) writes the GIF: one global palette, inter-frame deltas with a perceptual tolerance,
+   and a real transparent index for alpha sources. See [why](#why-another-gif-optimizer).
 
 All of it happens in a **Web Worker**, so dragging a slider never freezes the popup, and only
 the newest render is ever shown (stale results from an abandoned drag are discarded).
@@ -212,9 +230,9 @@ No. Decoding, editing and encoding all happen in your browser. The extension mak
 requests at all, except when you explicitly right-click an image on a page and confirm.
 
 **Why did my GIF barely shrink?**
-Because every frame differs from the last — a full-motion clip has no repeated pixels to skip.
-The popup says so and points you at the controls that help: fewer colors, ½ frames, smaller
-size. See the [measured results](#measured-results).
+Because a busy, full-motion clip has little repetition between frames to skip. The popup says so
+and points you at the controls that help: fewer colors, ½ frames, smaller size. See the
+[measured results](#measured-results).
 
 **Why is my optimized GIF *bigger* in some other tool?**
 Because that tool re-saved every frame in full and threw away the original's frame optimization.
