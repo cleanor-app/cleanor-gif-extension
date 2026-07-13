@@ -58,6 +58,11 @@ Need to crop a GIF, split it into pieces, or convert it to MP4? Those live on th
 - **Remote code:** none. All logic is bundled in the package.
 - **Data collected:** none. Nothing leaves the device.
 
+## Promo video
+
+https://youtu.be/OHB6zxRGRaw (Cleanor Labs, unlisted, 32s, ElevenLabs voiceover).
+The Web Store accepts a promo video only as a YouTube link. Paste it in the listing's "Video" field.
+
 ## Graphics
 
 | Asset | Size | File |
@@ -77,4 +82,4 @@ All store PNGs are 24-bit, **no alpha channel** (the Web Store rejects transpare
 - [ ] Category: Productivity · Language: English
 - [ ] Privacy tab: single purpose + justification for `contextMenus` and optional host access (text above)
 - [ ] "No, I am not selling user data" · no analytics in the extension
-- [ ] Promo video (YouTube, unlisted), optional, add if produced
+- [x] Promo video (YouTube, unlisted): https://youtu.be/OHB6zxRGRaw

@@ -11,6 +11,7 @@ No upload. No account. No tracking. No ffmpeg download.
 [![Manifest V3](https://img.shields.io/badge/manifest-v3-34a853.svg)](manifest.json)
 [![100% local](https://img.shields.io/badge/processing-100%25%20local-12b886.svg)](#privacy--permissions)
 [![Web tools](https://img.shields.io/badge/web%20version-cleanor.app-4576fd.svg)](https://cleanor.app/tools/reverse-gif)
+[![Demo](https://img.shields.io/badge/watch-30s%20demo-ff0000.svg)](https://youtu.be/OHB6zxRGRaw)
 
 <img src="store-listing/png/screenshot-1.png" width="760" alt="GIF Toolkit popup: an 8.4 MB meme GIF optimized to 4.2 MB with live preview">
 
