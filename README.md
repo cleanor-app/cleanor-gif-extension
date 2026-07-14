@@ -77,9 +77,9 @@ Two details make that work on GIFs people actually have, rather than only on syn
   already on the canvas. Drift is bounded, because each pixel is compared against what is
   actually displayed, not against an ideal.
 
-Bit-exact comparison alone would find nothing to skip on a real meme GIF, and the output would
-come out **62% bigger** than the source. That is not a hypothetical: it is what this encoder did
-before the tolerance was added.
+Bit-exact comparison alone finds almost nothing to skip on a real meme GIF, so the frame-diffing
+stops paying for itself and the output can end up larger than the source. The tolerance is what
+makes the optimisation apply to real files instead of only to synthetic ones.
 
 ### Measured results
 
@@ -224,11 +224,11 @@ vendor/gifenc/                    the bundled encoder (9 KB)
 
 ### Verification
 
-The extension is driven end-to-end in a real Chrome over CDP: **58 behavioural checks** covering
-every control, and asserting on the *decoded output pixels*, not just the UI: that reverse
-really reverses (frame 0 of the output matches the last frame of the source), that trimming is
-frame-exact, that frame delays are retimed, that Download lands a valid `GIF89a` on disk, that a
-corrupt file produces a clean error, and that transparency survives the round-trip.
+Every release is driven end-to-end in a real Chrome, asserting on the *decoded output pixels*
+rather than on the UI: that reverse really reverses (frame 0 of the output matches the last frame
+of the source), that trimming is frame-exact, that frame delays are retimed, that Download lands a
+valid `GIF89a` on disk, that a corrupt file produces a clean error, and that transparency survives
+the round-trip. The harness is not committed here yet.
 
 ---
 
